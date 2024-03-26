@@ -1,0 +1,17 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev --https --ssl-cert C:/Users/TBarbolani/Desktop/keycloak-23.0.6/keycloak-23.0.6/conf/kc.pem --ssl-key C:/Users/TBarbolani/Desktop/keycloak-23.0.6/keycloak-23.0.6/conf/kc.key",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "nuxt": "^3.11.1",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  }
+}

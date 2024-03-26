@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Vue App</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+
+</head>
+
+<body>
+  <div id="app">
+    <h1>Login with OpenID Connect</h1>
+    <div>
+      <!-- Buttons for login -->
+      <button @click="login1('response_type_code')">Login with PKCE</button>
+      <!--<button @click="implicit-token-login-button">Login with implicit flow (Access Token)</button>-->
+      <!--<button @click="implicit-login-button">Login with implicit flow (Access token + ID token)</button>-->
+      <button @click="login4('response_type_code_token')">Login with hybrid flow (auth code + Token)</button>
+      <button @click="login5('response_type_code_id_token')">Login with hybrid flow (auth code + ID Token)</button>
+      <!-- Button for logout -->
+      <button @click="logout">Logout</button>
+    </div>
+  </div>
+
+  <script>
+    import { createApp } from 'vue';
+import { createOidcClient } from 'oidc-client';
+    const app = Vue.createApp({
+      methods: {
+        async login1() {
+          window.location.href = 'localhost:8080/login1';
+          },
+      
+        //////////////////async login2(responseType) {
+        //////////////////    const authUrl = 'http://localhost:8085/realms/myrealm/protocol/openid-connect/auth';
+        //////////////////    const redirectUri = 'http://localhost/callback.html';
+        //////////////////    const scope = 'openid profile';
+        //////////////////    const state = 'random';
+        //////////////////    localStorage.setItem('clientId', responseType);
+        //////////////////    const url = new URL(authUrl);
+        //////////////////    url.searchParams.set('response_type', 'code');
+        //////////////////    url.searchParams.set('client_id', responseType);
+        //////////////////    url.searchParams.set('redirect_uri', redirectUri);
+        //////////////////    url.searchParams.set('scope', scope);
+        //////////////////    url.searchParams.set('state', state);
+        //////////////////    url.searchParams.set('code_challenge', localStorage.getItem('challenge'));
+        //////////////////    url.searchParams.set('code_challenge_method', 'S256');
+        //////////////////    window.location.href = url.toString();
+        //////////////////  },
+        ///////////  async login3(responseType) {
+        ///////////    const authUrl = 'http://localhost:8085/realms/myrealm/protocol/openid-connect/auth';
+        ///////////    const redirectUri = 'http://localhost/callback.html';
+        ///////////    const scope = 'openid profile';
+        ///////////    const state = 'random';
+        ///////////    localStorage.setItem('clientId', responseType);
+        ///////////    const url = new URL(authUrl);
+        ///////////    url.searchParams.set('response_type', 'code');
+        ///////////    url.searchParams.set('client_id', responseType);
+        ///////////    url.searchParams.set('redirect_uri', redirectUri);
+        ///////////    url.searchParams.set('scope', scope);
+        ///////////    url.searchParams.set('state', state);
+        ///////////    url.searchParams.set('code_challenge', localStorage.getItem('challenge'));
+        ///////////    url.searchParams.set('code_challenge_method', 'S256');
+        ///////////    window.location.href = url.toString();
+        ///////////  },
+          async login4(responseType) {
+            const authUrl = 'http://localhost:8085/realms/myrealm/protocol/openid-connect/auth';
+                 const clientId = 'response_type_code_token';
+            const redirectUri = 'http://localhost/callback.html';
+                 localStorage.setItem('clientId',responseType);
+            const url = new URL(authUrl);
+                 url.searchParams.set('response_type', 'code token');
+                 url.searchParams.set('client_id', responseType);
+            url.searchParams.set('redirect_uri', redirectUri);
+            url.searchParams.set('scope', 'openid profile');
+            url.searchParams.set('state', "random");
+            url.searchParams.set('code_challenge', localStorage.getItem("challenge"));
+            url.searchParams.set('code_challenge_method', 'S256');
+            window.location.href = url.toString();
+          },
+          async login5(responseType) {
+            const authUrl = 'http://localhost:8085/realms/myrealm/protocol/openid-connect/auth';
+            const clientId = 'response_type_code_id_token';
+            const redirectUri = 'http://localhost/callback.html';
+                   localStorage.setItem('clientId',responseType);
+            const url = new URL(authUrl);
+                   url.searchParams.set('response_type', 'code id_token');
+                   url.searchParams.set('client_id', responseType);
+            url.searchParams.set('redirect_uri', redirectUri);
+            url.searchParams.set('scope', 'openid profile');
+            url.searchParams.set('state', "random");
+            url.searchParams.set('nonce', 'a4ndhGndhjzgjdna');
+            url.searchParams.set('code_challenge', localStorage.getItem("challenge"));
+            url.searchParams.set('code_challenge_method', 'S256');
+            window.location.href = url.toString();
+          },
+          async logout() {
+            try {
+                const response = await fetch('http://localhost:8080/logout');
+                const data = await response.json();
+                window.location.href = data.logoutRedirectUrl;
+            } catch (error) {
+                console.error('Errore durante il logout:', error);
+            }
+        }
+      },
+      
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "watch": [
+    "src",
+    ".env",
+    "package.json"
+  ],
+  "ext": "js,ts,json,env",
+  "ignore": ["dist/**/*"],
+  "exec": "ts-node-dev ./src/server.ts || exit 1"
+}

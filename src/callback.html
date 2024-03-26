@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OpenID Connect Login</title>
+</head>
+<body>
+  <h1>CALLBACK PAGE</h1>
+  <pre id="callback">{{ callbackText }}</pre>
+  <h2>Access Token</h2>
+  <pre id="at">{{ accessToken }}</pre>
+  <h2>ID Token</h2>
+  <pre id="idtoken">{{ idToken }}</pre>
+  <button @click="sendPKCEToToken">Send PCKE verifier to token (authorization code)</button>
+  <button @click="sendPKCEToHybridToken">Send PCKE verifier to token for hybrid flow (hybrid flow code )</button>
+  <button @click="sendPKCEToHybridTokenId">Send PCKE verifier to token for hybrid flow (hybrid flow code id_token)</button>
+  <button @click="logout">Logout</button>
+  <button @click="verifyEmail">Verify</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          callbackText: '',
+          accessToken: '',
+          idToken: ''
+        }
+      },
+      methods: {
+        logout() {
+          const logoutUrl = 'http://localhost:8085/realms/myrealm/protocol/openid-connect/logout';
+          const clientId = localStorage.getItem('clientId');
+          const redirectUri = 'http://localhost/prova.php';
+          const url = new URL(logoutUrl);
+          url.searchParams.set('response_type', 'code');
+          url.searchParams.set('client_id', clientId);
+          url.searchParams.set('post_logout_redirect_uri', redirectUri);
+          localStorage.clear();
+          window.location.href = url.toString();
+        },
+        verifyEmail() {
+          const verifyUrl = 'http://localhost:8085/realms/myrealm/login-actions/required-action';
+          const clientId = localStorage.getItem('clientId');
+          const actionType = 'VERIFY_EMAIL';
+          const url = new URL(verifyUrl);
+          url.searchParams.set('execution', actionType);
+          url.searchParams.set('client_id', clientId);
+          window.location.href = url.toString();
+        },
+        sendPKCEToToken() {
+          const code = new URLSearchParams(window.location.search).get('code');
+          const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              grant_type: 'authorization_code',
+              client_id: 'pkce-test-client',
+              redirect_uri: 'http://localhost/callback.html',
+              code: code,
+              code_verifier: localStorage.getItem('code')
+            })
+          };
+          fetch('http://localhost:8085/realms/myrealm/protocol/openid-connect/token', requestOptions)
+            .then(response => response.json())
+            .then(data => {
+              this.callbackText = JSON.stringify(data, null, 2);
+              this.accessToken = JSON.parse(atob(data.access_token.split('.')[1]));
+              this.idToken = JSON.parse(atob(data.id_token.split('.')[1]));
+            })
+            .catch(error => {
+              this.callbackText = error;
+            });
+        },
+        sendPKCEToHybridToken() {
+          const code = new URLSearchParams(window.location.search).get('code');
+          const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              grant_type: 'authorization_code',
+              client_id: 'hybrid-flow-client',
+              redirect_uri: 'http://localhost/callback.html',
+              code: code,
+              code_verifier: localStorage.getItem('code')
+            })
+          };
+          fetch('http://localhost:8085/realms/myrealm/protocol/openid-connect/token', requestOptions)
+            .then(response => response.json())
+            .then(data => {
+              this.callbackText = JSON.stringify(data, null, 2);
+              this.accessToken = JSON.parse(atob(data.access_token.split('.')[1]));
+            })
+            .catch(error => {
+              this.callbackText = error;
+            });
+        },
+        sendPKCEToHybridTokenId() {
+          const code = new URLSearchParams(window.location.search).get('code');
+          const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              grant_type: 'authorization_code',
+              client_id: 'hybrid-test-client',
+              redirect_uri: 'http://localhost/callback.html',
+              code: code,
+              code_verifier: localStorage.getItem('code')
+            })
+          };
+          fetch('http://localhost:8085/realms/myrealm/protocol/openid-connect/token', requestOptions)
+            .then(response => response.json())
+            .then(data => {
+              this.callbackText = JSON.stringify(data, null, 2);
+              this.accessToken = JSON.parse(atob(data.access_token.split('.')[1]));
+              this.idToken = JSON.parse(atob(data.id_token.split('.')[1]));
+            })
+            .catch(error => {
+              this.callbackText = error;
+            });
+        }
+      },
+      created() {
+        const cleanedUrl = window.location.href.replace('#', '?');
+        const params = new URLSearchParams(new URL(cleanedUrl).search);
+        this.callbackText = 'Code: ' + params.get('code');
+      }
+    });
+
+    app.mount('body');
+  </script>
+</body>
+</html>
