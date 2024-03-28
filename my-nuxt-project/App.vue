@@ -86,8 +86,6 @@
       </button>
     </div>
 
-
-
     <div v-if="activeTab === 'id_token' || activeTab === 'access_token'">
       <input
         type="checkbox"
@@ -97,34 +95,32 @@
       /><span class="toggle-message">{{ isToggled ? "On" : "Off" }}</span>
     </div>
 
-
-
     <div class="tab-content">
       <div class="token-data" v-if="activeTab === 'code'">{{ code }}</div>
       <div
         class="token-data"
-        v-if="((activeTab === 'access_token') && (!isToggled))"
+        v-if="activeTab === 'access_token' && !isToggled"
         @mouseover="decodeAccessToken"
       >
         {{ access_token }}
       </div>
       <div
         class="token-data"
-        v-if="((activeTab === 'access_token') && (isToggled))"
+        v-if="activeTab === 'access_token' && isToggled"
         @mouseover="decodeAccessToken"
       >
         {{ token(access_token) }}
       </div>
       <div
         class="token-data"
-        v-if="((activeTab === 'id_token') && (!isToggled))"
+        v-if="activeTab === 'id_token' && !isToggled"
         @mouseover="decodeAccessToken"
       >
         {{ id_token }}
       </div>
       <div
         class="token-data"
-        v-if="((activeTab === 'id_token') && (isToggled))"
+        v-if="activeTab === 'id_token' && isToggled"
         @mouseover="decodeAccessToken"
       >
         {{ token(id_token) }}
@@ -144,9 +140,11 @@
   <button @click="showLogs">show logs</button>
 </template>
 
-<script>
+<script lang="js">
 export default {
+ 
   data() {
+    
     return {
       activeTab: "code",
       code: "",
@@ -189,13 +187,12 @@ export default {
       const selectedValue = event.target.value;
       switch (selectedValue) {
         case "login":
-          sessionStorage.setItem(
-            "logs",
-            (this.logs += "clicked login|||||||||||")
-          );
-          sessionStorage.setItem("clientId", "response_type_code");
-          window.location.href = "https://localhost:8080/login";
-
+          sessionStorage.setItem("logs",(this.logs += "clicked login|||||||||||"));
+          sessionStorage
+          .setItem("clientId",
+           "response_type_code");
+          window.location.href =
+          "https://localhost:8080/login";
           break;
         case "hybrid":
           sessionStorage.setItem(
@@ -203,11 +200,73 @@ export default {
             (this.logs += "clicked hybrid|||||||||||")
           );
           sessionStorage.setItem("clientId", "response_type_code_token");
-          window.location.href = "https://localhost:8080/hybrid";
 
+          try {
+            const state = Array.from(
+              window.crypto.getRandomValues(new Uint32Array(28)),
+              (dec) => ("0" + dec.toString(16)).substr(-2)
+            ).join("");
+            const nonce = Array.from(
+              window.crypto.getRandomValues(new Uint32Array(28)),
+              (dec) => ("0" + dec.toString(16)).substr(-2)
+            ).join("");
+            sessionStorage.setItem("state", state);
+            sessionStorage.setItem("nonce", nonce);
+            const params = new URLSearchParams({
+              response_type: "code token",
+              client_id: "response_type_code_token",
+              redirect_uri: "https://localhost:3000/App.vue",
+              scope: "openid profile",
+              state: sessionStorage.getItem("state"),
+              nonce: sessionStorage.getItem("nonce"),
+            });
+            const authUrl = `https://localhost:8443/
+            realms/myrealm/protocol/openid-connect/auth?
+            ${params.toString()}`;
+            window.location.href = authUrl;
+          } catch (error) {
+            console.error(error);
+          }
           break;
         case "implicit":
-          this.handleimplicit();
+          sessionStorage.setItem(
+            "logs",
+            (this.logs += "executing implicit|||||||||||")
+          );
+
+          const state = Array.from(
+            window.crypto.getRandomValues(new Uint32Array(28)),
+            (dec) => ("0" + dec.toString(16)).substr(-2)
+          ).join("");
+          const nonce = Array.from(
+            window.crypto.getRandomValues(new Uint32Array(28)),
+            (dec) => ("0" + dec.toString(16)).substr(-2)
+          ).join("");
+
+          const url = new URL("https://localhost:8443/realms/myrealm/protocol/openid-connect/auth");
+          const params = new URLSearchParams(url.search);
+          params.set("response_type", "token id_token");
+          params.set("client_id",
+           "response_type_token_id_token");
+          params.set("redirect_uri",
+           "https://localhost:3000/App.vue");
+          params.set("scope", "openid profile");
+          params.set("state", state);
+          params.set("nonce", nonce);
+          url.search = params.toString();
+
+          try {
+            sessionStorage.setItem(
+              "logs",
+              (this.logs += "is going to the url|||||||||||")
+            );
+            window.location.href = url.toString();
+          } catch (error) {
+            sessionStorage.setItem(
+              "logs",
+              (this.logs += "error implicit|||||||||||")
+            );
+          }
           sessionStorage.setItem(
             "logs",
             (this.logs += "clicked implicit|||||||||||")
@@ -239,11 +298,16 @@ export default {
             "logs",
             (this.logs += "clicked premium|||||||||||")
           );
+
           const cleanedUrl = window.location.href.replace("#", "?");
           const params = new URLSearchParams(new URL(cleanedUrl).search);
           const AccessTooken = params.get("access_token");
-          const parsedData = this.this.token(AccessTooken);
+          const parsedData = this.token(AccessTooken.toString());
           const Response = parsedData.scope.toString();
+          sessionStorage.setItem(
+            "logs",
+            (this.logs += "response:" + AccessTooken + "|||||||||||")
+          );
           if (Response.includes("privilegiati")) {
             this.response =
               "this is the premium message because you are part of the privilegiati group";
@@ -300,9 +364,9 @@ export default {
         const url =
           "https://localhost:8080/resource?type=private&access_token=" +
           (params.get("access_token") ||
-            sessionStorage.getItem("accessToken")) +
-          "&client_id=" +
-          sessionStorage.getItem("clientId");
+           sessionStorage.getItem("accessToken")) +
+          "&client_id=" + sessionStorage.
+          getItem("clientId");
         const response = await fetch(url);
         if (response.ok) {
           sessionStorage.setItem(
@@ -326,51 +390,7 @@ export default {
         this.response = "Error: Unable to fetch public resource";
       }
     },
-    handleimplicit() {
-      sessionStorage.setItem(
-        "logs",
-        (this.logs += "executing implicit|||||||||||")
-      );
 
-      const state = Array.from(
-        window.crypto.getRandomValues(new Uint32Array(28)),
-        (dec) => ("0" + dec.toString(16)).substr(-2)
-      ).join("");
-      const nonce = Array.from(
-        window.crypto.getRandomValues(new Uint32Array(28)),
-        (dec) => ("0" + dec.toString(16)).substr(-2)
-      ).join("");
-      const clientid = "response_type_token_id_token";
-      const authUrl =
-        "https://localhost:8443/realms/myrealm/protocol/openid-connect/auth";
-      const redirectUri = "https://localhost:3000/App.vue";
-      const scope = "openid profile";
-      const type = "id_token token";
-
-      const url = new URL(authUrl);
-      const params = new URLSearchParams(url.search);
-      params.set("response_type", type);
-      params.set("response_mode", "query");
-      params.set("client_id", clientid);
-      params.set("redirect_uri", redirectUri);
-      params.set("scope", scope);
-      params.set("state", state);
-      params.set("nonce", nonce);
-      url.search = params.toString();
-
-      try {
-        sessionStorage.setItem(
-          "logs",
-          (this.logs += "is going to the url|||||||||||")
-        );
-        window.location.href = url.toString();
-      } catch (error) {
-        sessionStorage.setItem(
-          "logs",
-          (this.logs += "executing implicit|||||||||||")
-        );
-      }
-    },
     handleLogout() {
       sessionStorage.setItem("logs", (this.logs += "logging out|||||||||||"));
       if (
@@ -413,26 +433,21 @@ export default {
         (this.logs += "refresh token is refreshing|||||||||||")
       );
       const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
-      const cleanedUrl = window.location.href.replace("#", "?");
       const params = new URLSearchParams(new URL(cleanedUrl).search);
       const urlencoded = new URLSearchParams();
+      const cleanedUrl = window.location.href.replace("#", "?");
+      myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
       urlencoded.append("client_id", sessionStorage.getItem("clientId"));
       urlencoded.append("grant_type", "refresh_token");
       console.log(params.get("refresh_token"));
       urlencoded.append("refresh_token", params.get("refresh_token"));
-
       const requestOptions = {
         method: "POST",
         headers: myHeaders,
         body: urlencoded,
         redirect: "follow",
-      };
-
-      fetch(
-        "https://localhost:8443/realms/myrealm/protocol/openid-connect/token",
-        requestOptions
-      )
+      };fetch("https://localhost:8443/realms/myrealm/protocol/openid-connect/token",
+        requestOptions)
         .then((response) => response.text())
         .then((result) => {
           const at = JSON.parse(result).access_token;
@@ -479,18 +494,10 @@ export default {
       urlencoded.append("client_id", sessionStorage.getItem("clientId"));
       urlencoded.append("redirect_uri", "https://localhost:3000/App.vue");
       urlencoded.append("code", params.get("code"));
-
-      const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: urlencoded,
-        redirect: "follow",
-      };
-
-      fetch(
+      const requestOptions = {method: "POST",headers: myHeaders,
+        body: urlencoded,redirect: "follow",};fetch(
         "https://localhost:8443/realms/myrealm/protocol/openid-connect/token",
-        requestOptions
-      )
+        requestOptions)
         .then((response) => response.text())
         .then((result) => {
           sessionStorage.setItem("id_token", JSON.parse(result).id_token);

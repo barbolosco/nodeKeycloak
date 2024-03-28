@@ -10,6 +10,9 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@dansmaculotte/nuxt-security": "^0.0.6",
+    "@nuxt/config": "^2.17.3",
+    "@nuxt/types": "^2.17.3",
     "nuxt": "^3.11.1",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"
